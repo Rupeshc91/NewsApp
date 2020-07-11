@@ -23,6 +23,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    productFlavors {
+        def STRING = "String"
+        flavorDimensions 'default'
+
+        prod {
+            applicationId "com.android.newsapp"
+            buildConfigField STRING, "BASE_URL", "\"https://newsapi.org/\""
+            buildConfigField STRING, "API_KEY", "\"b3a8ef924a4c430581fd8816046bfa1a\""
+            resValue "string", "app_name", "NewsApp"
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
