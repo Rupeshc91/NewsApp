@@ -50,7 +50,7 @@ class NewsAdapter(val callback: Callback) : RecyclerView.Adapter<RecyclerView.Vi
 
         fun updateView(article: Article) {
             this.article = article
-            newsItemViewBinding.news = article
+            newsItemViewBinding.article = article
             newsItemViewBinding.executePendingBindings()
         }
     }

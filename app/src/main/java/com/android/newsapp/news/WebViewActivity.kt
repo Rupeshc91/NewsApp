@@ -3,6 +3,7 @@ package com.android.newsapp.news
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import com.android.newsapp.R
@@ -21,8 +22,18 @@ class WebViewActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_web_view)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+        }
         intent.getStringExtra(INTENT_WEB_URL)?.let {
             findViewById<WebView>(R.id.web_view).loadUrl(it)
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId==android.R.id.home){
+          super.onBackPressed()
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
