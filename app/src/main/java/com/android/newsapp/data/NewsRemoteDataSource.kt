@@ -9,7 +9,7 @@ class NewsRemoteDataSource @Inject constructor(val apiService: ApiService) : Bas
         apiService.getSources()
     }
 
-    suspend fun getNews(page: Int) = getResult {
-        apiService.getNews(page = page)
+    suspend fun getNews(page: Int,source:String) = getResult {
+        apiService.getNews(page = page,sources = source)
     }
 }

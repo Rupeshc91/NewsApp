@@ -4,56 +4,122 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
-import com.android.newsapp.R
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.android.newsapp.api.Result
+import com.android.newsapp.databinding.FragmentNewsBinding
+import com.android.newsapp.di.Injectable
+import com.android.newsapp.di.ViewModelFactory
+import com.android.newsapp.model.Article
+import com.android.newsapp.viewutils.InfiniteScrollListener
+import javax.inject.Inject
 
 /**
  * A placeholder fragment containing a simple view.
  */
-class NewsFragment : Fragment() {
+class NewsFragment : Fragment(), Injectable, NewsAdapter.Callback {
 
-    private lateinit var pageViewModel: NewsViewModel
+    private lateinit var newsAdapter: NewsAdapter
+
+    @Inject
+    lateinit var viewModelFactory: ViewModelFactory
+    private lateinit var binding: FragmentNewsBinding
+    private var isLoadMore: Boolean = false
+    private var pageNumber: Int = 1
+    private lateinit var source: String
+    private var isRequesting: Boolean = false
+
+    private val newsViewModel by viewModels<NewsViewModel> {
+        viewModelFactory
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pageViewModel = ViewModelProviders.of(this).get(NewsViewModel::class.java).apply {
-            setIndex(arguments?.getInt(ARG_SECTION_NUMBER) ?: 1)
-        }
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
-        val root = inflater.inflate(R.layout.fragment_main, container, false)
-        val textView: TextView = root.findViewById(R.id.section_label)
-        pageViewModel.text.observe(this, Observer<String> {
-            textView.text = it
+        binding = FragmentNewsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        arguments?.getString(ARG_SOURCE_ID)?.apply {
+            source = this
+            newsViewModel.getNews(pageNumber++, source)
+        }
+        val infiniteScrollListener =
+            object : InfiniteScrollListener(binding.newsList.layoutManager as LinearLayoutManager) {
+                override fun onLoadMore() {
+                    isLoadMore = true
+                    if (!isDataLoading()) {
+                        newsViewModel.getNews(pageNumber++, source)
+                        isRequesting = true
+                    }
+                }
+
+                override fun isDataLoading(): Boolean {
+                    return isRequesting
+                }
+            }
+        newsAdapter = NewsAdapter(this)
+        with(binding.newsList) {
+            adapter = newsAdapter
+            addOnScrollListener(infiniteScrollListener)
+        }
+        subscribeOnUi()
+    }
+
+    private fun subscribeOnUi() {
+        newsViewModel.newsLiveData.observe(viewLifecycleOwner, Observer {
+            isRequesting = false
+            when (it.status) {
+                Result.Status.SUCCESS -> {
+                    isLoadMore = false
+                    binding.progressCircular.visibility = View.GONE
+                    var response = it.data
+                    response?.articles?.let {
+                        newsAdapter.setData(it)
+                    }
+                }
+                Result.Status.LOADING -> {
+                    if (!isLoadMore) {
+                        binding.progressCircular.visibility = View.VISIBLE
+                    }
+                }
+                Result.Status.ERROR -> {
+                    isLoadMore = false
+                    binding.progressCircular.visibility = View.GONE
+                    Toast.makeText(activity, it.message, Toast.LENGTH_SHORT).show()
+                }
+            }
         })
-        return root
     }
 
     companion object {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private const val ARG_SECTION_NUMBER = "section_number"
+        private const val ARG_SOURCE_ID = "source_id"
 
         /**
-         * Returns a new instance of this fragment for the given section
-         * number.
+         * Returns a new instance of this fragment for the given source
+         * id.
          */
         @JvmStatic
-        fun newInstance(sectionNumber: Int): NewsFragment {
+        fun newInstance(sourceId: String): NewsFragment {
             return NewsFragment().apply {
                 arguments = Bundle().apply {
-                    putInt(ARG_SECTION_NUMBER, sectionNumber)
+                    putString(ARG_SOURCE_ID, sourceId)
                 }
             }
         }
+    }
+
+    override fun onItemClick(article: Article) {
+        activity?.let { WebViewActivity.launchWebViewActivity(it, article.url) }
     }
 }

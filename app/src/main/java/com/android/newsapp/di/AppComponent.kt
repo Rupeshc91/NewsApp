@@ -5,7 +5,9 @@ import com.android.newsapp.NewsApplication
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.AndroidInjectionModule
+import javax.inject.Singleton
 
+@Singleton
 @Component(modules = [NetworkModule::class, DataModule::class,
     ViewModelModule::class, ActivityModule::class, AndroidInjectionModule::class])
 interface AppComponent {

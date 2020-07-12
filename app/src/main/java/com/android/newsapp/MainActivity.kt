@@ -1,31 +1,75 @@
 package com.android.newsapp
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.viewpager.widget.ViewPager
-import com.android.newsapp.news.SectionsPagerAdapter
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.tabs.TabLayout
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import com.android.newsapp.api.Result
+import com.android.newsapp.databinding.ActivityMainBinding
+import com.android.newsapp.di.ViewModelFactory
+import com.android.newsapp.news.NewsPagerAdapter
+import com.android.newsapp.news.NewsViewModel
+import dagger.android.AndroidInjector
+import dagger.android.DispatchingAndroidInjector
+import dagger.android.support.HasSupportFragmentInjector
+import javax.inject.Inject
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
 
+    @Inject
+    lateinit var viewModelFactory: ViewModelFactory
+
+    private val newsViewModel by viewModels<NewsViewModel> {
+        viewModelFactory
+    }
+
+    private val sectionsPagerAdapter = NewsPagerAdapter(
+        supportFragmentManager
+    )
+    private lateinit var binding: ActivityMainBinding
+
+    @Inject
+    internal lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        val sectionsPagerAdapter = SectionsPagerAdapter(
-            this,
-            supportFragmentManager
-        )
-        val viewPager: ViewPager = findViewById(R.id.view_pager)
-        viewPager.adapter = sectionsPagerAdapter
-        val tabs: TabLayout = findViewById(R.id.tabs)
-        tabs.setupWithViewPager(viewPager)
-        val fab: FloatingActionButton = findViewById(R.id.fab)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        newsViewModel.getSource()
+        subscribeOnUi()
 
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
-        }
+        binding.viewPager.adapter = sectionsPagerAdapter
+        binding.tabs.setupWithViewPager(binding.viewPager)
+    }
+
+    private fun subscribeOnUi() {
+        newsViewModel.sourceLiveData.observe(this, Observer {
+            when (it.status) {
+                Result.Status.SUCCESS -> {
+                    binding.progressCircular.visibility = View.GONE
+                    it?.data?.sources?.let { it1 ->
+                        sectionsPagerAdapter.setSource(
+                            it1.subList(
+                                0,
+                                10
+                            )
+                        )
+                    }
+                }
+                Result.Status.ERROR -> {
+                    binding.progressCircular.visibility = View.GONE
+                    Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
+                }
+                Result.Status.LOADING -> {
+                    binding.progressCircular.visibility = View.VISIBLE
+                }
+            }
+        })
+    }
+
+    override fun supportFragmentInjector(): AndroidInjector<Fragment> {
+        return dispatchingAndroidInjector
     }
 }

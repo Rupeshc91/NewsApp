@@ -1,18 +1,40 @@
 package com.android.newsapp.news
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.android.newsapp.api.Result
+import com.android.newsapp.data.NewsRepository
+import com.android.newsapp.model.ArticleResponse
+import com.android.newsapp.model.SourceResponse
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NewsViewModel : ViewModel() {
+class NewsViewModel @Inject constructor(val newsRepository: NewsRepository) : ViewModel() {
 
-    private val _index = MutableLiveData<Int>()
-    val text: LiveData<String> = Transformations.map(_index) {
-        "Hello world from section: $it"
+    val sourceLiveData = MutableLiveData<Result<SourceResponse>>()
+    val newsLiveData = MutableLiveData<Result<ArticleResponse>>()
+
+    fun getSource() {
+        viewModelScope.launch {
+            sourceLiveData.postValue(Result.loading(null))
+            val response = newsRepository.getSources()
+            sourceLiveData.postValue(response)
+        }
     }
 
-    fun setIndex(index: Int) {
-        _index.value = index
+    fun getNews(pageNumber: Int, source: String) {
+        viewModelScope.launch {
+            newsLiveData.postValue(Result.loading(null))
+            val response = newsRepository.getNews(pageNumber, source)
+            newsLiveData.postValue(response)
+        }
+    }
+
+    fun refreshNews(source: String) {
+        viewModelScope.launch {
+            val response = newsRepository.getNews(1, source)
+            newsLiveData.postValue(response)
+        }
     }
 }
