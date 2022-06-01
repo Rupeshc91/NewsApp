@@ -6,19 +6,18 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.android.newsapp.api.Result
 import com.android.newsapp.databinding.ActivityMainBinding
+import com.android.newsapp.di.AppInjector
 import com.android.newsapp.di.ViewModelFactory
+import com.android.newsapp.di.home.HomeComponent
+import com.android.newsapp.di.home.HomeModule
 import com.android.newsapp.news.NewsPagerAdapter
 import com.android.newsapp.news.NewsViewModel
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.support.HasSupportFragmentInjector
 import javax.inject.Inject
 
-class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
+class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
@@ -31,11 +30,12 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
         supportFragmentManager
     )
     private lateinit var binding: ActivityMainBinding
+    var homeComponent: HomeComponent? = null
 
-    @Inject
-    internal lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        homeComponent = AppInjector.appComponent.plusHomeComponent(HomeModule())
+        homeComponent?.inject(this)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         newsViewModel.getSource()
         subscribeOnUi()
@@ -69,7 +69,9 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
         })
     }
 
-    override fun supportFragmentInjector(): AndroidInjector<Fragment> {
-        return dispatchingAndroidInjector
+    override fun onDestroy() {
+        super.onDestroy()
+        homeComponent = null
     }
+
 }

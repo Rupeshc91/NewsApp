@@ -1,5 +1,6 @@
 package com.android.newsapp.news
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,10 +10,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.android.newsapp.MainActivity
 import com.android.newsapp.api.Result
 import com.android.newsapp.databinding.FragmentNewsBinding
-import com.android.newsapp.di.Injectable
 import com.android.newsapp.di.ViewModelFactory
+import com.android.newsapp.di.home.HomeComponent
 import com.android.newsapp.model.Article
 import com.android.newsapp.viewutils.InfiniteScrollListener
 import javax.inject.Inject
@@ -20,7 +22,7 @@ import javax.inject.Inject
 /**
  * A placeholder fragment containing a simple view.
  */
-class NewsFragment : Fragment(), Injectable, NewsAdapter.Callback {
+class NewsFragment : Fragment(), NewsAdapter.Callback {
 
     private lateinit var newsAdapter: NewsAdapter
 
@@ -31,6 +33,7 @@ class NewsFragment : Fragment(), Injectable, NewsAdapter.Callback {
     private var pageNumber: Int = 1
     private lateinit var source: String
     private var isRequesting: Boolean = false
+    private var homeComponent: HomeComponent? = null
 
     private val newsViewModel by viewModels<NewsViewModel> {
         viewModelFactory
@@ -40,10 +43,18 @@ class NewsFragment : Fragment(), Injectable, NewsAdapter.Callback {
         super.onCreate(savedInstanceState)
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is MainActivity) {
+            homeComponent = context.homeComponent
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        homeComponent?.inject(this)
         binding = FragmentNewsBinding.inflate(inflater, container, false)
         return binding.root
     }

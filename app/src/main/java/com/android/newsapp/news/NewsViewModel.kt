@@ -10,7 +10,7 @@ import com.android.newsapp.model.SourceResponse
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class NewsViewModel @Inject constructor(val newsRepository: NewsRepository) : ViewModel() {
+class NewsViewModel @Inject constructor(private val newsRepository: NewsRepository) : ViewModel() {
 
     val sourceLiveData = MutableLiveData<Result<SourceResponse>>()
     val newsLiveData = MutableLiveData<Result<ArticleResponse>>()
