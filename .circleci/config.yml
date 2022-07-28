@@ -96,6 +96,6 @@ workflows:
       - release-build:
 #          requires:
 #            - unit-test
-#          filters:
-#            branches:
-#              only: main # Commits to main branch
+          filters:
+            branches:
+              only: circleci-project-setup # Commits to main branch
