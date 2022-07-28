@@ -4,16 +4,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.newsapp.api.Result
-import com.android.newsapp.data.NewsRepository
-import com.android.newsapp.model.ArticleResponse
+import com.android.newsapp.data.NewsRepositoryImpl
 import com.android.newsapp.model.SourceResponse
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class NewsViewModel @Inject constructor(val newsRepository: NewsRepository) : ViewModel() {
+class NewsViewModel @Inject constructor(private val newsRepository: NewsRepositoryImpl) : ViewModel() {
 
     val sourceLiveData = MutableLiveData<Result<SourceResponse>>()
-    val newsLiveData = MutableLiveData<Result<ArticleResponse>>()
 
     fun getSource() {
         viewModelScope.launch {
@@ -23,18 +21,6 @@ class NewsViewModel @Inject constructor(val newsRepository: NewsRepository) : Vi
         }
     }
 
-    fun getNews(pageNumber: Int, source: String) {
-        viewModelScope.launch {
-            newsLiveData.postValue(Result.loading(null))
-            val response = newsRepository.getNews(pageNumber, source)
-            newsLiveData.postValue(response)
-        }
-    }
+    fun getNews(pageNumber: Int, source: String) = newsRepository.getNews(pageNumber, source)
 
-    fun refreshNews(source: String) {
-        viewModelScope.launch {
-            val response = newsRepository.getNews(1, source)
-            newsLiveData.postValue(response)
-        }
-    }
 }

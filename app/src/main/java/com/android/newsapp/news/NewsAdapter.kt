@@ -25,8 +25,8 @@ class NewsAdapter(val callback: Callback) : RecyclerView.Adapter<RecyclerView.Vi
         return news.size
     }
 
-    fun setData(news: List<Article>) {
-        news.let {
+    fun setData(news: List<Article>?) {
+        news?.let {
             this.news.addAll(news)
             notifyDataSetChanged()
         }

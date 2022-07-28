@@ -1,4 +1,4 @@
-package com.android.newsapp.di
+package com.android.newsapp.di.module
 
 import com.android.newsapp.MainActivity
 import dagger.Module

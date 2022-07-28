@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
                         sectionsPagerAdapter.setSource(
                             it1.subList(
                                 0,
-                                10
+                                1
                             )
                         )
                     }

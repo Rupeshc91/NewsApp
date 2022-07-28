@@ -2,14 +2,17 @@ package com.android.newsapp.di
 
 import android.app.Application
 import com.android.newsapp.NewsApplication
+import com.android.newsapp.di.module.*
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.AndroidInjectionModule
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [NetworkModule::class, DataModule::class,
-    ViewModelModule::class, ActivityModule::class, AndroidInjectionModule::class])
+@Component(
+    modules = [NetworkModule::class, DataModule::class,
+        ViewModelModule::class, ActivityModule::class, AndroidInjectionModule::class, DatabaseModule::class]
+)
 interface AppComponent {
 
     @Component.Builder
@@ -20,4 +23,5 @@ interface AppComponent {
     }
 
     fun inject(application: NewsApplication)
+
 }

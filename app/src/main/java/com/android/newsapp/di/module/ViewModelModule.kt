@@ -1,7 +1,9 @@
-package com.android.newsapp.di
+package com.android.newsapp.di.module
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.android.newsapp.di.ViewModelFactory
+import com.android.newsapp.di.ViewModelKey
 import com.android.newsapp.news.NewsViewModel
 import dagger.Binds
 import dagger.Module

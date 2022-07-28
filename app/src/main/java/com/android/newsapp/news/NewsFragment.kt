@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.newsapp.api.Result
 import com.android.newsapp.databinding.FragmentNewsBinding
@@ -15,6 +15,7 @@ import com.android.newsapp.di.Injectable
 import com.android.newsapp.di.ViewModelFactory
 import com.android.newsapp.model.Article
 import com.android.newsapp.viewutils.InfiniteScrollListener
+import kotlinx.coroutines.flow.collect
 import javax.inject.Inject
 
 /**
@@ -52,7 +53,6 @@ class NewsFragment : Fragment(), Injectable, NewsAdapter.Callback {
         super.onViewCreated(view, savedInstanceState)
         arguments?.getString(ARG_SOURCE_ID)?.apply {
             source = this
-            newsViewModel.getNews(pageNumber++, source)
         }
         val infiniteScrollListener =
             object : InfiniteScrollListener(binding.newsList.layoutManager as LinearLayoutManager) {
@@ -77,29 +77,27 @@ class NewsFragment : Fragment(), Injectable, NewsAdapter.Callback {
     }
 
     private fun subscribeOnUi() {
-        newsViewModel.newsLiveData.observe(viewLifecycleOwner, Observer {
-            isRequesting = false
-            when (it.status) {
-                Result.Status.SUCCESS -> {
-                    isLoadMore = false
-                    binding.progressCircular.visibility = View.GONE
-                    var response = it.data
-                    response?.articles?.let {
-                        newsAdapter.setData(it)
+        lifecycleScope.launchWhenCreated {
+            newsViewModel.getNews(pageNumber++, source).collect {
+                when (it.status) {
+                    Result.Status.SUCCESS -> {
+                        isLoadMore = false
+                        binding.progressCircular.visibility = View.GONE
+                        newsAdapter.setData(it.data)
                     }
-                }
-                Result.Status.LOADING -> {
-                    if (!isLoadMore) {
-                        binding.progressCircular.visibility = View.VISIBLE
+                    Result.Status.ERROR -> {
+                        isLoadMore = false
+                        binding.progressCircular.visibility = View.GONE
+                        Toast.makeText(activity, it.message, Toast.LENGTH_SHORT).show()
                     }
-                }
-                Result.Status.ERROR -> {
-                    isLoadMore = false
-                    binding.progressCircular.visibility = View.GONE
-                    Toast.makeText(activity, it.message, Toast.LENGTH_SHORT).show()
+                    Result.Status.LOADING -> {
+                        if (!isLoadMore) {
+                            binding.progressCircular.visibility = View.VISIBLE
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 
     companion object {
